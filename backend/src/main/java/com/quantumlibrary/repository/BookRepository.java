@@ -26,4 +26,12 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     /** Count available books */
     long countByStockGreaterThan(int stock);
+
+    /** Count distinct book titles (= number of rows, since each row is one title) */
+    @Query("SELECT COUNT(DISTINCT b.id) FROM Book b")
+    long countDistinctTitles();
+
+    /** Total physical copies across all books — SELECT SUM(stock) */
+    @Query("SELECT COALESCE(SUM(b.stock), 0) FROM Book b")
+    Long sumStock();
 }

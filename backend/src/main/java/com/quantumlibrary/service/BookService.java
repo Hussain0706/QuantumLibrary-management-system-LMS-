@@ -89,6 +89,15 @@ public class BookService {
 
     // ── Stats helpers used by AdminController ──
 
-    public long totalBooks()     { return bookRepository.count(); }
+    /** Number of unique book titles in the catalog (e.g. 32) */
+    public long totalBooks()     { return bookRepository.countDistinctTitles(); }
+
+    /** Number of titles that still have at least 1 copy available */
     public long availableBooks() { return bookRepository.countByStockGreaterThan(0); }
+
+    /** Total physical copies across all titles — SUM(stock) e.g. 115 */
+    public long totalCopies()    {
+        Long v = bookRepository.sumStock();
+        return v == null ? 0L : v;
+    }
 }

@@ -3,97 +3,89 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="QuantumLibrary Admin Panel – manage books, borrows, stock and fines." />
   <title>Admin Panel – QuantumLibrary</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔐</text></svg>" />
   <style>
-    /* ── Admin theme ── */
+    /* ══ Admin theme ══ */
     :root { --admin-primary:#6c3483; --admin-light:#8e44ad; --admin-glow:rgba(142,68,173,.25); }
     .sidebar { background: linear-gradient(180deg,#1a0a2e 0%,#2d1b4e 100%); }
     .sidebar-logo { border-bottom-color: rgba(255,255,255,.08); }
     .sidebar-link.active { background: rgba(142,68,173,.25); border-left-color: var(--admin-light); }
     .sidebar-link:hover  { background: rgba(142,68,173,.15); }
 
-    /* ── Section header ── */
+    /* ══ Live pulse ══ */
+    @keyframes livePulse {
+      0%,100% { opacity:1; transform:scale(1);    }
+      50%      { opacity:.4; transform:scale(1.4); }
+    }
+
+    /* ══ Section header ══ */
     .admin-section-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
     .admin-section-hdr h3 { font-size:1.15rem; font-weight:700; color:var(--primary); }
 
-    /* ══════════════════════════════════════════
-       5 OVERVIEW STAT CARDS
-    ══════════════════════════════════════════ */
+    /* ══ 5 Stat Cards ══ */
     .admin-stats {
-      display: grid;
-      grid-template-columns: repeat(5,1fr);
-      gap: 16px;
-      margin-bottom: 28px;
+      display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:28px;
     }
     @media(max-width:1200px){ .admin-stats{ grid-template-columns:repeat(3,1fr); } }
     @media(max-width:700px){  .admin-stats{ grid-template-columns:repeat(2,1fr); } }
     @media(max-width:420px){  .admin-stats{ grid-template-columns:1fr; } }
 
     .a-stat {
-      background: var(--white);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      padding: 22px 20px 16px;
-      display: flex; flex-direction: column; gap: 4px;
-      box-shadow: var(--shadow-sm);
-      cursor: pointer; user-select: none;
-      position: relative; overflow: hidden;
-      transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease;
+      background:var(--white); border-radius:var(--radius); border:1px solid var(--border);
+      padding:22px 20px 16px; display:flex; flex-direction:column; gap:4px;
+      box-shadow:var(--shadow-sm); cursor:pointer; user-select:none;
+      position:relative; overflow:hidden;
+      transition:transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s ease;
     }
-    /* coloured left stripe */
     .a-stat::before {
-      content: '';
-      position: absolute; top:0; left:0;
-      width: 4px; height: 100%;
-      border-radius: 4px 0 0 4px;
-      background: var(--border);
-      transition: background .2s;
+      content:''; position:absolute; top:0; left:0; width:4px; height:100%;
+      border-radius:4px 0 0 4px; background:var(--border); transition:background .2s;
     }
-    /* hover arrow */
     .a-stat::after {
-      content: '→';
-      position: absolute; bottom:13px; right:15px;
-      font-size: .82rem; font-weight:700; color:var(--text-muted);
+      content:'→'; position:absolute; bottom:13px; right:15px;
+      font-size:.82rem; font-weight:700; color:var(--text-muted);
       opacity:0; transform:translateX(-5px);
-      transition: opacity .2s ease, transform .2s ease;
+      transition:opacity .2s, transform .2s;
     }
-    .a-stat.purple::before { background: var(--admin-light); }
-    .a-stat.green::before  { background: #27ae60; }
-    .a-stat.orange::before { background: #e67e22; }
-    .a-stat.red::before    { background: #e74c3c; }
-    .a-stat.violet::before { background: #8e44ad; }
-
     .a-stat:hover { transform:translateY(-5px); box-shadow:0 14px 36px rgba(44,62,80,.13); }
     .a-stat:hover::after { opacity:1; transform:translateX(0); }
     .a-stat:hover .a-icon { transform:scale(1.14) rotate(-4deg); }
-    .a-stat:active { transform:translateY(-2px) scale(.975); transition:transform .08s ease; }
+    .a-stat:active { transform:translateY(-2px) scale(.975); }
+
+    .a-stat.purple::before { background:var(--admin-light); }
+    .a-stat.green::before  { background:#27ae60; }
+    .a-stat.orange::before { background:#e67e22; }
+    .a-stat.red::before    { background:#e74c3c; }
+    .a-stat.violet::before { background:#8e44ad; }
 
     .a-stat .a-icon { font-size:1.65rem; margin-bottom:6px; display:inline-block; transition:transform .22s cubic-bezier(.34,1.56,.64,1); }
     .a-stat .a-num  { font-size:1.9rem; font-weight:800; line-height:1; color:var(--primary); letter-spacing:-.02em; }
-    .a-stat .a-lbl  { font-size:.75rem; color:var(--text-muted); font-weight:500; margin-bottom:8px; }
-    .a-stat.purple .a-num { color: var(--admin-light); }
-    .a-stat.green  .a-num { color: #27ae60; }
-    .a-stat.orange .a-num { color: #e67e22; }
-    .a-stat.red    .a-num { color: #e74c3c; }
-    .a-stat.violet .a-num { color: #8e44ad; }
+    .a-stat .a-lbl  { font-size:.72rem; color:var(--text-muted); font-weight:600; letter-spacing:.04em; text-transform:uppercase; margin-bottom:8px; }
+    .a-stat.purple .a-num { color:var(--admin-light); }
+    .a-stat.green  .a-num { color:#27ae60; }
+    .a-stat.orange .a-num { color:#e67e22; }
+    .a-stat.red    .a-num { color:#e74c3c; }
+    .a-stat.violet .a-num { color:#8e44ad; }
 
-    /* progress bar */
     .a-progress-track { height:5px; background:var(--border); border-radius:50px; overflow:hidden; margin-top:auto; }
     .a-progress-fill  { height:100%; border-radius:50px; width:0%; transition:width 1.1s cubic-bezier(.4,0,.2,1) .2s; }
-    .a-stat.purple .a-progress-fill { background: var(--admin-light); }
-    .a-stat.green  .a-progress-fill { background: #27ae60; }
-    .a-stat.orange .a-progress-fill { background: #e67e22; }
-    .a-stat.red    .a-progress-fill { background: #e74c3c; }
-    .a-stat.violet .a-progress-fill { background: #8e44ad; }
-
-    /* sub-label under bar */
+    .a-stat.purple .a-progress-fill { background:var(--admin-light); }
+    .a-stat.green  .a-progress-fill { background:#27ae60; }
+    .a-stat.orange .a-progress-fill { background:#e67e22; }
+    .a-stat.red    .a-progress-fill { background:#e74c3c; }
+    .a-stat.violet .a-progress-fill { background:#8e44ad; }
     .a-sub { font-size:.68rem; color:var(--text-muted); margin-top:5px; min-height:13px; }
 
-    /* ── Books table ── */
+    /* ══ Books table ══ */
     .books-mgmt-table { width:100%; border-collapse:collapse; font-size:.875rem; }
-    .books-mgmt-table th { background:var(--primary); color:var(--white); padding:11px 14px; text-align:left; font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+    .books-mgmt-table th {
+      background:var(--primary); color:var(--white); padding:11px 14px;
+      text-align:left; font-size:.78rem; font-weight:600;
+      text-transform:uppercase; letter-spacing:.04em;
+    }
     .books-mgmt-table th:first-child { border-radius:8px 0 0 0; }
     .books-mgmt-table th:last-child  { border-radius:0 8px 0 0; }
     .books-mgmt-table td { padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
@@ -111,20 +103,20 @@
     .act-btn.del-btn  { color:#e74c3c; border-color:#e74c3c; }
     .act-btn.del-btn:hover  { background:#e74c3c; color:#fff; }
 
-    /* ── Add/Edit modal form ── */
+    /* ══ Modal form ══ */
     .book-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
     .book-form-grid .full { grid-column:1/-1; }
     .form-lbl { display:block; font-size:.82rem; font-weight:600; color:var(--primary); margin-bottom:5px; }
-    .form-inp { width:100%; padding:10px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:.875rem; outline:none; transition:var(--transition); background:var(--bg); color:var(--text); font-family:inherit; }
+    .form-inp { width:100%; padding:10px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:.875rem; outline:none; transition:var(--transition); background:var(--bg); color:var(--text); font-family:inherit; box-sizing:border-box; }
     .form-inp:focus { border-color:var(--admin-light); background:var(--white); box-shadow:0 0 0 3px var(--admin-glow); }
 
-    /* ── Fine badge ── */
+    /* ══ Fine badge ══ */
     .fine-badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:.72rem; font-weight:700; }
     .fine-badge.none    { background:rgba(39,174,96,.12);  color:#27ae60; }
     .fine-badge.overdue { background:rgba(231,76,60,.12);  color:#e74c3c; }
     .fine-badge.soon    { background:rgba(243,156,18,.12); color:#e67e22; }
 
-    /* ── Filter row ── */
+    /* ══ Filter row ══ */
     .filter-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:18px; }
     .filter-row input, .filter-row select { padding:8px 13px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:.85rem; outline:none; background:var(--white); transition:var(--transition); font-family:inherit; color:var(--text); }
     .filter-row input { width:260px; }
@@ -133,11 +125,11 @@
     .f-tab { padding:6px 14px; border-radius:50px; font-size:.8rem; font-weight:600; border:1.5px solid var(--border); background:none; cursor:pointer; color:var(--text-muted); transition:var(--transition); }
     .f-tab.active, .f-tab:hover { background:var(--admin-light); color:var(--white); border-color:var(--admin-light); }
 
-    /* ── Empty state ── */
+    /* ══ Empty state ══ */
     .empty-state { text-align:center; padding:50px 20px; color:var(--text-muted); }
     .empty-state .ei { font-size:3rem; margin-bottom:12px; display:block; }
 
-    /* ── Overdue cards ── */
+    /* ══ Overdue cards ══ */
     .overdue-card { background:var(--white); border-radius:var(--radius); border:1px solid var(--border); padding:18px 20px; display:flex; align-items:center; gap:16px; box-shadow:var(--shadow-sm); margin-bottom:12px; transition:var(--transition); }
     .overdue-card:hover { transform:translateX(4px); box-shadow:var(--shadow-md); }
     .overdue-card .oc-icon  { font-size:2rem; flex-shrink:0; }
@@ -146,7 +138,7 @@
     .overdue-card .oc-meta  { font-size:.8rem; color:var(--text-muted); margin-top:3px; }
     .overdue-card .oc-fine  { font-size:1.1rem; font-weight:800; color:#e74c3c; }
 
-    /* ── Modals ── */
+    /* ══ Modals ══ */
     .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity var(--transition); }
     .modal-overlay.open { opacity:1; pointer-events:all; }
     .modal { background:var(--white); border-radius:var(--radius); width:100%; max-width:500px; box-shadow:var(--shadow-lg); transform:translateY(20px) scale(.96); transition:transform var(--transition); }
@@ -159,7 +151,6 @@
     .modal-footer { padding:20px 28px; border-top:1px solid var(--border); display:flex; gap:12px; justify-content:flex-end; }
 
     .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:199; }
-
     @media(max-width:900px){ .book-form-grid{grid-template-columns:1fr;} .filter-row input{width:100%;} }
     @media(max-width:700px){ .dash-grid-wrap{grid-template-columns:1fr !important;} }
   </style>
@@ -222,8 +213,11 @@
       <input type="text" id="globalSearch" placeholder="Search books, members..." oninput="handleAdminSearch(this.value)" />
     </div>
     <div class="topbar-right">
-      <button class="btn" style="background:var(--admin-light);color:#fff;padding:9px 18px;font-size:.85rem;"
-        onclick="showSection('books',document.getElementById('nav-books'));openAddBookModal()">＋ Add Book</button>
+      <button class="btn" id="addBookTopBtn"
+        style="background:var(--admin-light);color:#fff;padding:9px 18px;font-size:.85rem;"
+        onclick="showSection('books',document.getElementById('nav-books'));setTimeout(openAddBookModal,50)">
+        ＋ Add Book
+      </button>
     </div>
   </header>
 
@@ -232,54 +226,66 @@
     <!-- ══ OVERVIEW ══ -->
     <div class="page-section active" id="section-overview">
 
-      <!-- 5 STAT CARDS -->
+      <!-- Live sync indicator -->
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:14px;">
+        <span style="display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--text-muted);">
+          <span style="width:8px;height:8px;border-radius:50%;background:#27ae60;display:inline-block;animation:livePulse 2s ease-in-out infinite;"></span>
+          Live · Updated <span id="lastUpdatedTime">—</span>
+        </span>
+        <button onclick="refreshAll()" title="Refresh now"
+          style="padding:4px 10px;border-radius:6px;border:1.5px solid var(--border);background:none;font-size:.75rem;cursor:pointer;color:var(--text-muted);transition:var(--transition);">
+          ⟳ Refresh
+        </button>
+      </div>
+
+      <!-- 5 stat cards -->
       <div class="admin-stats">
 
-        <!-- Total Books -->
+        <!-- Card 1: Total Books (unique titles) -->
         <div class="a-stat purple" title="Manage all books"
              onclick="showSection('books',document.getElementById('nav-books'))">
           <div class="a-icon">📚</div>
-          <div class="a-num"  id="ovTotalBooks">0</div>
+          <div class="a-num" id="ovTotalBooks">0</div>
           <div class="a-lbl">Total Books</div>
           <div class="a-progress-track"><div class="a-progress-fill" id="pbTotalBooks"></div></div>
-          <div class="a-sub" id="subTotalBooks">in library</div>
+          <div class="a-sub" id="subTotalBooks">titles in library</div>
         </div>
 
-        <!-- Available Copies -->
+        <!-- Card 2: Available Copies (SUM of all stock) -->
         <div class="a-stat green" title="Browse available stock"
              onclick="showSection('books',document.getElementById('nav-books'));document.getElementById('bookFilterStock').value='available';renderAdminBooks();">
           <div class="a-icon">✅</div>
-          <div class="a-num"  id="ovAvailable">0</div>
+          <div class="a-num" id="ovAvailable">0</div>
           <div class="a-lbl">Available Copies</div>
           <div class="a-progress-track"><div class="a-progress-fill" id="pbAvailable"></div></div>
           <div class="a-sub" id="subAvailable">copies in stock</div>
         </div>
 
-        <!-- Currently Borrowed -->
+        <!-- Card 3: Currently Borrowed -->
         <div class="a-stat orange" title="View all active borrows"
              onclick="showSection('borrows',document.getElementById('nav-borrows'))">
-          <div class="a-icon">📋</div>
-          <div class="a-num"  id="ovBorrowed">0</div>
+          <div class="a-icon">📖</div>
+          <div class="a-num" id="ovBorrowed">0</div>
           <div class="a-lbl">Currently Borrowed</div>
           <div class="a-progress-track"><div class="a-progress-fill" id="pbBorrowed"></div></div>
           <div class="a-sub" id="subBorrowed">active loans</div>
         </div>
 
-        <!-- Overdue -->
+        <!-- Card 4: Overdue Books -->
         <div class="a-stat red" title="View overdue books"
              onclick="showSection('overdue',document.getElementById('nav-overdue'))">
           <div class="a-icon">⚠️</div>
-          <div class="a-num"  id="ovOverdue">0</div>
+          <div class="a-num" id="ovOverdue">0</div>
           <div class="a-lbl">Overdue Books</div>
           <div class="a-progress-track"><div class="a-progress-fill" id="pbOverdue"></div></div>
           <div class="a-sub" id="subOverdue">past due date</div>
         </div>
 
-        <!-- Total Fines -->
+        <!-- Card 5: Total Fines Due -->
         <div class="a-stat violet" title="View fines &amp; overdue section"
              onclick="showSection('overdue',document.getElementById('nav-overdue'))">
           <div class="a-icon">💰</div>
-          <div class="a-num"  id="ovFines">₹0</div>
+          <div class="a-num" id="ovFines">₹0</div>
           <div class="a-lbl">Total Fines Due</div>
           <div class="a-progress-track"><div class="a-progress-fill" id="pbFines"></div></div>
           <div class="a-sub" id="subFines">₹5 / day overdue</div>
@@ -304,18 +310,20 @@
     <div class="page-section" id="section-books">
       <div class="admin-section-hdr">
         <h3>📚 Manage Books <span id="booksMgmtCount" style="font-size:.85rem;color:var(--text-muted);font-weight:400;"></span></h3>
-        <button class="btn" style="background:var(--admin-light);color:#fff;padding:9px 18px;font-size:.85rem;" onclick="openAddBookModal()">＋ Add New Book</button>
+        <button class="btn" id="addBookSectionBtn"
+          style="background:var(--admin-light);color:#fff;padding:9px 18px;font-size:.85rem;"
+          onclick="openAddBookModal()">＋ Add New Book</button>
       </div>
       <div class="filter-row">
         <input type="text" id="bookSearchAdmin" placeholder="🔍 Search by title, author, ISBN..." oninput="renderAdminBooks()" />
         <select id="bookFilterGenre" onchange="renderAdminBooks()">
           <option value="all">All Categories</option>
-          <option value="fiction">Fiction</option>
-          <option value="science">Science</option>
-          <option value="history">History</option>
-          <option value="philosophy">Philosophy</option>
-          <option value="programming">Programming</option>
-          <option value="technology">Technology</option>
+          <option value="Fiction">Fiction</option>
+          <option value="Science">Science</option>
+          <option value="History">History</option>
+          <option value="Philosophy">Philosophy</option>
+          <option value="Programming">Programming</option>
+          <option value="Technology">Technology</option>
         </select>
         <select id="bookFilterStock" onchange="renderAdminBooks()">
           <option value="all">All Stock</option>
@@ -371,7 +379,8 @@
 <div class="modal-overlay" id="logoutModal">
   <div class="modal" style="max-width:400px;">
     <div class="modal-header">
-      <h3>Confirm Logout</h3><button class="modal-close" onclick="closeModal('logoutModal')">✕</button>
+      <h3>Confirm Logout</h3>
+      <button class="modal-close" onclick="closeModal('logoutModal')">✕</button>
     </div>
     <div class="modal-body" style="text-align:center;padding:36px 28px;">
       <div style="font-size:3rem;margin-bottom:12px;">🚪</div>
@@ -394,24 +403,45 @@
     </div>
     <div class="modal-body" style="padding:24px 28px;">
       <div class="book-form-grid">
-        <div><label class="form-lbl">Book Title *</label><input class="form-inp" id="fTitle" placeholder="e.g. Clean Code" /></div>
-        <div><label class="form-lbl">Author *</label><input class="form-inp" id="fAuthor" placeholder="e.g. Robert C. Martin" /></div>
         <div>
-          <label class="form-lbl">Category *</label>
+          <label class="form-lbl" for="fTitle">Book Title *</label>
+          <input class="form-inp" id="fTitle" placeholder="e.g. Clean Code" />
+        </div>
+        <div>
+          <label class="form-lbl" for="fAuthor">Author *</label>
+          <input class="form-inp" id="fAuthor" placeholder="e.g. Robert C. Martin" />
+        </div>
+        <div>
+          <label class="form-lbl" for="fGenre">Category *</label>
           <select class="form-inp" id="fGenre">
-            <option value="fiction">Fiction</option>
-            <option value="science">Science</option>
-            <option value="history">History</option>
-            <option value="philosophy">Philosophy</option>
-            <option value="programming">Programming</option>
-            <option value="technology">Technology</option>
+            <option value="Fiction">Fiction</option>
+            <option value="Science">Science</option>
+            <option value="History">History</option>
+            <option value="Philosophy">Philosophy</option>
+            <option value="Programming">Programming</option>
+            <option value="Technology">Technology</option>
           </select>
         </div>
-        <div><label class="form-lbl">Year</label><input class="form-inp" id="fYear" type="number" placeholder="e.g. 2020" min="0" max="2099" /></div>
-        <div><label class="form-lbl">ISBN</label><input class="form-inp" id="fIsbn" placeholder="978-x-xx-xxxxxx-x" /></div>
-        <div><label class="form-lbl">Stock (copies) *</label><input class="form-inp" id="fStock" type="number" placeholder="e.g. 3" min="0" /></div>
-        <div class="full"><label class="form-lbl">Cover Image URL</label><input class="form-inp" id="fCover" placeholder="https://..." /></div>
-        <div class="full"><label class="form-lbl">Description</label><textarea class="form-inp" id="fDesc" rows="3" placeholder="Short description of the book..."></textarea></div>
+        <div>
+          <label class="form-lbl" for="fYear">Year</label>
+          <input class="form-inp" id="fYear" type="number" placeholder="e.g. 2020" min="0" max="2099" />
+        </div>
+        <div>
+          <label class="form-lbl" for="fIsbn">ISBN</label>
+          <input class="form-inp" id="fIsbn" placeholder="978-x-xx-xxxxxx-x" />
+        </div>
+        <div>
+          <label class="form-lbl" for="fStock">Stock (copies) *</label>
+          <input class="form-inp" id="fStock" type="number" placeholder="e.g. 3" min="0" />
+        </div>
+        <div class="full">
+          <label class="form-lbl" for="fCover">Cover Image URL</label>
+          <input class="form-inp" id="fCover" placeholder="https://..." />
+        </div>
+        <div class="full">
+          <label class="form-lbl" for="fDesc">Description</label>
+          <textarea class="form-inp" id="fDesc" rows="3" placeholder="Short description of the book..."></textarea>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -425,10 +455,37 @@
 <div class="modal-overlay" id="deleteModal">
   <div class="modal" style="max-width:400px;">
     <div class="modal-header">
-      <h3>🗑️ Delete Book</h3><button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+      <h3>🗑️ Delete Book</h3>
+      <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
     </div>
     <div class="modal-body" style="text-align:center;padding:30px;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">🗑️</div>
+      <p style="font-size:.95rem;color:var(--text);">Are you sure you want to delete <strong id="deleteBookName">"this book"</strong>?</p>
+      <p style="font-size:.82rem;color:var(--text-muted);margin-top:6px;">This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('deleteModal')">Cancel</button>
+      <button class="btn btn-primary" style="background:#e74c3c;" id="confirmDeleteBtn">🗑️ Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- script.js MUST come first — provides getBooks(), saveBooks(), getActiveBorrows(),
+     calcFine(), returnBorrow(), nextBookId(), showToast() etc. -->
+<script src="script.js"></script>
+<!-- api.js provides API.isBackendOnline(), API.admin.stats(), etc. -->
+<script src="api.js"></script>
+
 <script>
+/* ══════════════════════════════════════════════════════════════════
+   ADMIN PANEL — Main Script
+   Data priority:
+     1. Backend API (Spring Boot) when online  → live DB data
+     2. script.js localStorage layer (lib_books / lib_borrows) → offline
+   ══════════════════════════════════════════════════════════════════ */
+
 /* ── AUTH GUARD ── */
 (function () {
   var role = sessionStorage.getItem('libRole');
@@ -437,107 +494,518 @@
   }
 }());
 
-/* ══════════════════════════════════════════════
-   STATIC BOOK CATALOG
-   Admin can add/edit/delete — saved to localStorage
-══════════════════════════════════════════════ */
-var DEFAULT_BOOKS = [
-  { id:1,  title:'1984',                            author:'George Orwell',           genre:'fiction',     stock:4, year:1949 },
-  { id:2,  title:'To Kill a Mockingbird',           author:'Harper Lee',              genre:'fiction',     stock:3, year:1960 },
-  { id:3,  title:'A Brief History of Time',         author:'Stephen Hawking',         genre:'science',     stock:5, year:1988 },
-  { id:4,  title:'Sapiens',                         author:'Yuval Noah Harari',       genre:'history',     stock:6, year:2011 },
-  { id:5,  title:'The Great Gatsby',                author:'F. Scott Fitzgerald',     genre:'fiction',     stock:3, year:1925 },
-  { id:6,  title:'The Alchemist',                   author:'Paulo Coelho',            genre:'fiction',     stock:5, year:1988 },
-  { id:7,  title:'Thinking, Fast and Slow',         author:'Daniel Kahneman',         genre:'science',     stock:4, year:2011 },
-  { id:8,  title:'Dune',                            author:'Frank Herbert',           genre:'fiction',     stock:5, year:1965 },
-  { id:9,  title:'Meditations',                     author:'Marcus Aurelius',         genre:'philosophy',  stock:4, year:180  },
-  { id:10, title:'The Hobbit',                      author:'J.R.R. Tolkien',          genre:'fiction',     stock:5, year:1937 },
-  { id:11, title:'Atomic Habits',                   author:'James Clear',             genre:'science',     stock:6, year:2018 },
-  { id:12, title:'Clean Code',                      author:'Robert C. Martin',        genre:'technology',  stock:3, year:2008 },
-  { id:13, title:'Effective Java',                  author:'Joshua Bloch',            genre:'programming', stock:4, year:2018 },
-  { id:14, title:'Head First Java',                 author:'Kathy Sierra',            genre:'programming', stock:5, year:2005 },
-  { id:15, title:'Python Crash Course',             author:'Eric Matthes',            genre:'programming', stock:5, year:2019 },
-  { id:16, title:'Fluent Python',                   author:'Luciano Ramalho',         genre:'programming', stock:3, year:2022 },
-  { id:17, title:'Automate the Boring Stuff',       author:'Al Sweigart',             genre:'programming', stock:4, year:2019 },
-  { id:18, title:'The C Programming Language',      author:'Kernighan & Ritchie',     genre:'programming', stock:3, year:1988 },
-  { id:19, title:'The C++ Programming Language',    author:'Bjarne Stroustrup',       genre:'programming', stock:4, year:2013 },
-  { id:20, title:'Introduction to Algorithms',      author:'Cormen et al.',           genre:'programming', stock:3, year:2009 },
-  { id:21, title:'Data Structures & Algorithms',    author:'Narasimha Karumanchi',    genre:'programming', stock:5, year:2020 },
-  { id:22, title:'Cracking the Coding Interview',   author:'Gayle Laakmann McDowell', genre:'programming', stock:6, year:2015 },
-  { id:23, title:'JavaScript: The Good Parts',      author:'Douglas Crockford',       genre:'programming', stock:4, year:2008 },
-  { id:24, title:'Clean Architecture',              author:'Robert C. Martin',        genre:'programming', stock:3, year:2017 },
-  { id:25, title:'Design Patterns',                 author:'Gang of Four',            genre:'programming', stock:3, year:1994 },
-  { id:26, title:'The Pragmatic Programmer',        author:'Hunt & Thomas',           genre:'programming', stock:5, year:2019 },
-  { id:27, title:'R for Data Science',              author:'Hadley Wickham',          genre:'programming', stock:4, year:2017 },
-  { id:28, title:'Homo Deus',                       author:'Yuval Noah Harari',       genre:'history',     stock:4, year:2015 },
-  { id:29, title:'The Republic',                    author:'Plato',                   genre:'philosophy',  stock:3, year:-380 },
-  { id:30, title:'A Short History of Nearly Everything', author:'Bill Bryson',        genre:'science',     stock:5, year:2003 },
-  { id:31, title:'The Psychology of Money',         author:'Morgan Housel',           genre:'science',     stock:6, year:2020 },
-  { id:32, title:'Guns, Germs, and Steel',          author:'Jared Diamond',           genre:'history',     stock:4, year:1997 },
-];
-
-/* ── Load/save admin books from localStorage ── */
-function loadAdminBooks() {
-  try { return JSON.parse(localStorage.getItem('admin_books') || 'null') || DEFAULT_BOOKS.slice(); }
-  catch(e) { return DEFAULT_BOOKS.slice(); }
-}
-function saveAdminBooks() {
-  localStorage.setItem('admin_books', JSON.stringify(_allBooks));
-}
-
-/* ── Load all borrow records from localStorage ── */
-function loadAllBorrows() {
-  var records = [];
-  try {
-    var raw = JSON.parse(localStorage.getItem('dash_borrowed') || '[]');
-    var curEmail = sessionStorage.getItem('libEmail') || 'member';
-    raw.forEach(function(r) { r._userEmail = curEmail; records.push(r); });
-  } catch(e) {}
-  return records;
-}
-
 /* ── STATE ── */
 var editingBookId = null;
 var deleteBookId  = null;
 var borrowsFilter = 'all';
-var _allBorrows   = [];
-var _allBooks     = loadAdminBooks();
 
-/* ── INIT ── */
+/* ════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function () {
   refreshAll();
+  startLiveSync();            // poll every 30 s for live updates
 });
 
-/* ══════════════════════════════════════════════
-   REFRESH ALL — uses localStorage only
-══════════════════════════════════════════════ */
-function refreshAll() {
-  _allBooks   = loadAdminBooks();
-  _allBorrows = loadAllBorrows();
-  loadStats();
+/* ════════════════════════════════════════════════
+   REFRESH ALL — loads stats + renders all sections
+════════════════════════════════════════════════ */
+async function refreshAll() {
+  var backendOnline = await API.isBackendOnline();
+
+  /* ── backend status badge ── */
+  var badge = document.getElementById('backendStatusBadge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'backendStatusBadge';
+    badge.style.cssText = 'position:fixed;bottom:16px;right:16px;padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:700;z-index:9999;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);';
+    document.body.appendChild(badge);
+  }
+  badge.textContent       = backendOnline ? '🟢 Backend Online' : '🔴 Offline Mode';
+  badge.style.background  = backendOnline ? '#27ae60' : '#e74c3c';
+
+  if (backendOnline) {
+    await loadFromBackend();
+  } else {
+    loadFromLocalStorage();
+  }
+
+  /* always render the tables */
   renderAdminBooks();
   renderBorrowsTable();
   renderOverdue();
-  var active  = _allBorrows.filter(function(b) { return !b.returned; });
-  var overdue = active.filter(function(b) { return new Date(b.dueDate) < new Date(); });
-  document.getElementById('adminBorrowsBadge').textContent = active.length  || '';
-  document.getElementById('adminOverdueBadge').textContent = overdue.length || '';
-  renderRecentPanels(active, overdue);
+  updateBadges();
 }
 
-/* ── SECTION NAV ── */
-function showSection(name, btn) {
-  var titles = { overview:'Overview', books:'Manage Books', borrows:'All Borrows', overdue:'Overdue & Fines' };
-  document.getElementById('topbarTitle').textContent = titles[name] || name;
-  document.querySelectorAll('.page-section').forEach(function (s) { s.classList.remove('active'); });
-  document.getElementById('section-' + name).classList.add('active');
-  document.querySelectorAll('.sidebar-link').forEach(function (l) { l.classList.remove('active'); });
-  if (btn) btn.classList.add('active');
-  if (window.innerWidth < 900) closeSidebar();
+/* ── Load everything from Spring Boot API ── */
+async function loadFromBackend() {
+  var token = sessionStorage.getItem('libToken');
+
+  /* Step 1: books (public endpoint) */
+  try {
+    var apiBooks = await API.books.getAll();
+    if (apiBooks && apiBooks.length > 0) {
+      /* Sync into lib_books so offline mode stays up to date */
+      var mapped = apiBooks.map(function(b) {
+        return { id:b.id, title:b.title, author:b.author, genre:b.genre||'Fiction',
+                 year:b.year||0, isbn:b.isbn||'', stock:b.stock||0,
+                 cover:b.coverUrl||'', desc:b.description||'', rating:b.rating||4 };
+      });
+      saveBooks(mapped);
+    }
+  } catch(e) { console.warn('Books API:', e.message); }
+
+  /* Step 2: borrows (needs auth) — render DIRECTLY from API response */
+  var apiBorrowsMapped = null;
+  try {
+    if (token) {
+      var apiBorrows = await API.borrow.all();
+      /* Map backend format → lib_borrows format */
+      apiBorrowsMapped = apiBorrows.map(function(r) {
+        return { id:r.id, bookId:r.book?r.book.id:null,
+                 memberId:r.user?r.user.email:'member',
+                 borrowDate:r.borrowDate, dueDate:r.dueDate,
+                 returned:r.returned, returnDate:r.returnDate||null };
+      });
+      /* Also keep localStorage in sync for offline fallback */
+      saveBorrows(apiBorrowsMapped);
+    }
+  } catch(e) { console.warn('Borrows API:', e.message); }
+
+  /* Step 3: Stats cards from /api/admin/stats */
+  var statsLoaded = false;
+  try {
+    if (token) {
+      var stats = await API.admin.stats();
+      if (stats.totalBooks || stats.totalCopies || stats.activeBorrows !== undefined) {
+        renderStatsCards({
+          totalBooks    : stats.totalBooks    || 0,
+          totalCopies   : stats.totalCopies   || stats.availableBooks || 0,
+          activeBorrows : stats.activeBorrows || 0,
+          overdueCount  : stats.overdueCount  || 0,
+          finesOutstanding: stats.finesOutstanding || 0
+        });
+        statsLoaded = true;
+        updateTimestamp();
+      }
+    }
+  } catch(e) { console.warn('Stats API:', e.message); }
+
+  /* Render panels — use API borrow data if available, else fall back to localStorage */
+  var activeBorrows;
+  if (apiBorrowsMapped !== null) {
+    /* Use the live API data directly — no localStorage bridge needed */
+    activeBorrows = apiBorrowsMapped.filter(function(b) { return !b.returned; });
+  } else {
+    activeBorrows = getActiveBorrows();
+  }
+  var overdueList = activeBorrows.filter(function(b) { return new Date(b.dueDate) < new Date(); });
+
+  if (statsLoaded) {
+    renderRecentPanels(activeBorrows, overdueList);
+  } else {
+    /* Fallback: compute stats from the borrow data we have */
+    var books       = getBooks();
+    var totalCopies = books.reduce(function(s,b) { return s+(b.stock||0); }, 0);
+    var finesTotal  = activeBorrows.reduce(function(s,b) { return s+calcFine(b.dueDate); }, 0);
+    renderStatsCards({
+      totalBooks: books.length, totalCopies: totalCopies,
+      activeBorrows: activeBorrows.length, overdueCount: overdueList.length,
+      finesOutstanding: finesTotal
+    });
+    renderRecentPanels(activeBorrows, overdueList);
+    updateTimestamp();
+  }
+}
+
+/* ── Load everything from localStorage (offline) ── */
+function loadFromLocalStorage() {
+  computeAndRenderStats();
+}
+
+/* ════════════════════════════════════════════════
+   STATS CARDS
+════════════════════════════════════════════════ */
+function computeAndRenderStats() {
+  var books         = getBooks();
+  var activeBorrows = getActiveBorrows();
+  var totalCopies   = books.reduce(function(s, b) { return s + (b.stock || 0); }, 0);
+  var overdueList   = activeBorrows.filter(function(b) { return new Date(b.dueDate) < new Date(); });
+  var finesTotal    = activeBorrows.reduce(function(s, b) { return s + calcFine(b.dueDate); }, 0);
+
+  renderStatsCards({
+    totalBooks      : books.length,
+    totalCopies     : totalCopies,
+    activeBorrows   : activeBorrows.length,
+    overdueCount    : overdueList.length,
+    finesOutstanding: finesTotal
+  });
+
+  /* Recent borrows panel */
+  renderRecentPanels(activeBorrows, overdueList);
+  updateTimestamp();
+}
+
+function renderStatsCards(s) {
+  animCount('ovTotalBooks', s.totalBooks);
+  animCount('ovAvailable',  s.totalCopies);
+  animCount('ovBorrowed',   s.activeBorrows);
+  animCount('ovOverdue',    s.overdueCount);
+
+  var fEl = document.getElementById('ovFines');
+  if (fEl) {
+    fEl.textContent = '₹' + Math.round(s.finesOutstanding);
+    fEl.style.color  = s.finesOutstanding > 0 ? '#e74c3c' : '#8e44ad';
+  }
+
+  setText('subTotalBooks', s.totalBooks + ' titles in library');
+  setText('subAvailable',  s.totalCopies + ' copies in stock');
+  setText('subBorrowed',   s.activeBorrows + ' active loans');
+  setText('subOverdue',    s.overdueCount > 0 ? s.overdueCount + ' past due date' : 'all on time ✅');
+  setText('subFines',      s.finesOutstanding > 0
+    ? '₹5/day · outstanding ₹' + Math.round(s.finesOutstanding)
+    : 'no fines due ✅');
+
+  var total = s.totalCopies || 1;
+  setTimeout(function() {
+    setBar('pbTotalBooks', 100);
+    setBar('pbAvailable',  100);
+    setBar('pbBorrowed',   Math.round(s.activeBorrows / total * 100));
+    setBar('pbOverdue',    s.activeBorrows > 0 ? Math.round(s.overdueCount / s.activeBorrows * 100) : 0);
+    setBar('pbFines',      Math.min(Math.round(s.finesOutstanding / 500 * 100), 100));
+  }, 150);
+}
+
+/* ════════════════════════════════════════════════
+   RECENT PANELS (overview page)
+════════════════════════════════════════════════ */
+function renderRecentPanels(activeBorrows, overdueList) {
+  var books = getBooks();
+
+  var rEl = document.getElementById('ovRecentBorrows');
+  if (rEl) {
+    if (!activeBorrows.length) {
+      rEl.innerHTML = '<div class="empty-state"><span class="ei">📋</span>No active borrows yet.</div>';
+    } else {
+      rEl.innerHTML = activeBorrows.slice(0, 5).map(function(b) {
+        var book = books.find(function(x) { return x.id === b.bookId; }) || {};
+        var fine = calcFine(b.dueDate);
+        return '<div class="activity-item">'
+          + '<div class="act-icon borrow">📚</div>'
+          + '<div style="flex:1;">'
+          + '<span style="font-size:.85rem;font-weight:600;">' + (book.title || 'Book #' + b.bookId) + '</span>'
+          + '<span style="display:block;font-size:.75rem;color:var(--text-muted);">'
+          + (b.memberId || b._userEmail || 'member') + ' · Due: ' + fmtDate(b.dueDate)
+          + (fine > 0 ? ' · <span style="color:#e74c3c;font-weight:700;">₹' + fine + ' fine</span>' : '')
+          + '</span></div></div>';
+      }).join('');
+    }
+  }
+
+  var oEl = document.getElementById('ovOverdueSummary');
+  if (oEl) {
+    if (!overdueList.length) {
+      oEl.innerHTML = '<div class="empty-state"><span class="ei">✅</span>No overdue books!</div>';
+    } else {
+      oEl.innerHTML = overdueList.slice(0, 5).map(function(b) {
+        var book = books.find(function(x) { return x.id === b.bookId; }) || {};
+        var fine = calcFine(b.dueDate);
+        return '<div class="activity-item">'
+          + '<div class="act-icon" style="background:rgba(231,76,60,.12);color:#e74c3c;">⚠️</div>'
+          + '<div style="flex:1;">'
+          + '<span style="font-size:.85rem;font-weight:600;color:#e74c3c;">' + (book.title || 'Book #' + b.bookId) + '</span>'
+          + '<span style="display:block;font-size:.75rem;color:var(--text-muted);">'
+          + (b.memberId || b._userEmail || 'member') + ' · Fine: <strong style="color:#e74c3c;">₹' + fine + '</strong>'
+          + '</span></div></div>';
+      }).join('');
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════
+   SIDEBAR BADGES
+════════════════════════════════════════════════ */
+function updateBadges() {
+  var books         = getBooks();
+  var activeBorrows = getActiveBorrows();
+  var overdueList   = activeBorrows.filter(function(b) { return new Date(b.dueDate) < new Date(); });
+  document.getElementById('adminBooksBadge').textContent   = books.length;
+  document.getElementById('adminBorrowsBadge').textContent = activeBorrows.length || '';
+  document.getElementById('adminOverdueBadge').textContent = overdueList.length   || '';
+}
+
+/* ════════════════════════════════════════════════
+   MANAGE BOOKS TABLE
+════════════════════════════════════════════════ */
+function renderAdminBooks() {
+  var q      = ((document.getElementById('bookSearchAdmin') || {}).value || '').toLowerCase().trim();
+  var genre  = ((document.getElementById('bookFilterGenre')  || {}).value || 'all');
+  var stockF = ((document.getElementById('bookFilterStock')  || {}).value || 'all');
+
+  var books = getBooks();
+  if (q)               books = books.filter(function(b) { return b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || (b.isbn||'').includes(q); });
+  if (genre !== 'all') books = books.filter(function(b) { return (b.genre||'').toLowerCase() === genre.toLowerCase(); });
+  if (stockF === 'available') books = books.filter(function(b) { return b.stock > 0; });
+  if (stockF === 'empty')     books = books.filter(function(b) { return b.stock === 0; });
+
+  var lbl = document.getElementById('booksMgmtCount');
+  if (lbl) lbl.textContent = '(' + books.length + ' books)';
+
+  var tbody = document.getElementById('booksMgmtBody');
+  if (!books.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><span class="ei">📭</span>No books found.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = books.map(function(b) {
+    var sClass = b.stock === 0 ? 'empty' : (b.stock <= 2 ? 'low' : 'ok');
+    var sLabel = b.stock === 0 ? '📛 Out of Stock' : (b.stock <= 2 ? '⚠️ ' + b.stock + ' left' : '✅ ' + b.stock + ' copies');
+    return '<tr>'
+      + '<td style="font-size:.78rem;color:var(--text-muted);font-weight:600;">#' + String(b.id).padStart(3,'0') + '</td>'
+      + '<td><span style="font-weight:600;font-size:.875rem;">' + b.title + '</span></td>'
+      + '<td style="font-size:.84rem;">' + b.author + '</td>'
+      + '<td><span class="book-genre-tag" style="position:static;font-size:.72rem;">' + (b.genre||'') + '</span></td>'
+      + '<td style="font-size:.82rem;color:var(--text-muted);">' + (b.year > 0 ? b.year : (b.year < 0 ? Math.abs(b.year) + ' BC' : '—')) + '</td>'
+      + '<td><span class="stock-pill ' + sClass + '">' + sLabel + '</span></td>'
+      + '<td style="white-space:nowrap;">'
+      + '<button class="act-btn edit-btn" onclick="openEditBookModal(' + b.id + ')">✏️ Edit</button>&nbsp;'
+      + '<button class="act-btn del-btn" onclick="openDeleteModal(' + b.id + ')">🗑️</button>'
+      + '</td></tr>';
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════
+   ADD / EDIT BOOK MODAL
+════════════════════════════════════════════════ */
+function openAddBookModal() {
+  editingBookId = null;
+  document.getElementById('bookModalTitle').textContent   = '➕ Add New Book';
+  document.getElementById('bookModalSaveBtn').textContent = '💾 Save Book';
+  ['fTitle','fAuthor','fYear','fIsbn','fStock','fCover','fDesc'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('fGenre').value = 'Fiction';
+  openModal('bookModal');
+}
+
+function openEditBookModal(id) {
+  var book = getBooks().find(function(b) { return b.id === id; });
+  if (!book) return;
+  editingBookId = id;
+  document.getElementById('bookModalTitle').textContent   = '✏️ Edit Book';
+  document.getElementById('bookModalSaveBtn').textContent = '💾 Update Book';
+  document.getElementById('fTitle').value  = book.title  || '';
+  document.getElementById('fAuthor').value = book.author || '';
+  document.getElementById('fGenre').value  = book.genre  || 'Fiction';
+  document.getElementById('fYear').value   = book.year   || '';
+  document.getElementById('fIsbn').value   = book.isbn   || '';
+  document.getElementById('fStock').value  = book.stock  !== undefined ? book.stock : 0;
+  document.getElementById('fCover').value  = book.cover  || book.coverUrl || '';
+  document.getElementById('fDesc').value   = book.desc   || book.description || '';
+  openModal('bookModal');
+}
+
+async function saveBook() {
+  var title  = document.getElementById('fTitle').value.trim();
+  var author = document.getElementById('fAuthor').value.trim();
+  var genre  = document.getElementById('fGenre').value;
+  var year   = parseInt(document.getElementById('fYear').value)  || new Date().getFullYear();
+  var isbn   = document.getElementById('fIsbn').value.trim();
+  var stock  = parseInt(document.getElementById('fStock').value);
+  if (isNaN(stock) || stock < 0) stock = 0;
+  var cover  = document.getElementById('fCover').value.trim();
+  var desc   = document.getElementById('fDesc').value.trim();
+
+  if (!title || !author) {
+    showToast('Please fill Title and Author fields.', 'error'); return;
+  }
+
+  var bookData = { title:title, author:author, genre:genre, year:year,
+                   isbn:isbn, stock:stock, cover:cover, coverUrl:cover,
+                   description:desc, desc:desc };
+
+  /* ── Try backend first if online ── */
+  var backendOnline = await API.isBackendOnline();
+  if (backendOnline) {
+    try {
+      if (editingBookId) {
+        await API.books.update(editingBookId, { title:title, author:author, genre:genre,
+          year:year, isbn:isbn, stock:stock, coverUrl:cover, description:desc });
+        showToast('"' + title + '" updated ✅', 'success');
+      } else {
+        await API.books.add({ title:title, author:author, genre:genre,
+          year:year, isbn:isbn, stock:stock, coverUrl:cover, description:desc }, false);
+        showToast('"' + title + '" added 📚', 'success');
+      }
+      closeModal('bookModal');
+      refreshAll();
+      return;
+    } catch(e) {
+      showToast(e.message || 'Backend save failed. Saving locally.', 'warning');
+    }
+  }
+
+  /* ── Offline: save to lib_books via script.js saveBooks() ── */
+  var books = getBooks();
+  if (editingBookId) {
+    var idx = books.findIndex(function(b) { return b.id === editingBookId; });
+    if (idx > -1) { books[idx] = Object.assign(books[idx], bookData); }
+    showToast('"' + title + '" updated ✅', 'success');
+  } else {
+    bookData.id     = nextBookId();
+    bookData.rating = 4;
+    books.push(bookData);
+    showToast('"' + title + '" added 📚', 'success');
+  }
+  saveBooks(books);
+  closeModal('bookModal');
   refreshAll();
 }
 
-/* ── SIDEBAR ── */
+/* ════════════════════════════════════════════════
+   DELETE BOOK
+════════════════════════════════════════════════ */
+function openDeleteModal(id) {
+  deleteBookId = id;
+  var book = getBooks().find(function(b) { return b.id === id; });
+  document.getElementById('deleteBookName').textContent = book ? '"' + book.title + '"' : 'this book';
+  document.getElementById('confirmDeleteBtn').onclick = confirmDelete;
+  openModal('deleteModal');
+}
+
+async function confirmDelete() {
+  if (!deleteBookId) return;
+  var books = getBooks();
+  var book  = books.find(function(b) { return b.id === deleteBookId; });
+
+  var backendOnline = await API.isBackendOnline();
+  if (backendOnline) {
+    try {
+      await API.books.delete(deleteBookId);
+      showToast('"' + (book ? book.title : 'Book') + '" deleted.', 'info');
+      closeModal('deleteModal'); deleteBookId = null; refreshAll(); return;
+    } catch(e) { showToast(e.message || 'Backend delete failed.', 'error'); return; }
+  }
+
+  /* Offline */
+  books = books.filter(function(b) { return b.id !== deleteBookId; });
+  saveBooks(books);
+  var borrows = getBorrows().filter(function(b) { return b.bookId !== deleteBookId; });
+  saveBorrows(borrows);
+  showToast('"' + (book ? book.title : 'Book') + '" deleted.', 'info');
+  closeModal('deleteModal');
+  deleteBookId = null;
+  refreshAll();
+}
+
+/* ════════════════════════════════════════════════
+   BORROWS TABLE
+════════════════════════════════════════════════ */
+function filterBorrowsTab(filter, btn) {
+  borrowsFilter = filter;
+  document.querySelectorAll('.f-tab').forEach(function(t) { t.classList.remove('active'); });
+  btn.classList.add('active');
+  renderBorrowsTable();
+}
+
+function renderBorrowsTable() {
+  var books  = getBooks();
+  var active = getActiveBorrows();
+  if (borrowsFilter === 'overdue') active = active.filter(function(b) { return new Date(b.dueDate) < new Date(); });
+  if (borrowsFilter === 'safe')    active = active.filter(function(b) { return new Date(b.dueDate) >= new Date(); });
+
+  var tbody = document.getElementById('borrowsTableBody');
+  if (!active.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><span class="ei">📋</span>No borrow records yet.<br><small>Members borrow books from the dashboard.</small></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = active.map(function(b, i) {
+    var book     = books.find(function(x) { return x.id === b.bookId; }) || {};
+    var fine     = calcFine(b.dueDate);
+    var daysLeft = Math.ceil((new Date(b.dueDate) - new Date()) / 86400000);
+    var isOD     = daysLeft < 0;
+    var cls      = isOD ? 'overdue' : (daysLeft <= 3 ? 'soon' : 'none');
+    var lbl      = isOD ? Math.abs(daysLeft) + 'd overdue' : daysLeft + 'd left';
+    var member   = b.memberId || b._userEmail || 'member';
+    return '<tr>'
+      + '<td style="font-size:.78rem;color:var(--text-muted);">' + (i+1) + '</td>'
+      + '<td style="font-size:.85rem;font-weight:600;">👤 ' + member + '</td>'
+      + '<td style="font-size:.85rem;">' + (book.title || 'Book #' + b.bookId) + '</td>'
+      + '<td style="font-size:.8rem;color:var(--text-muted);">' + fmtDate(b.borrowDate) + '</td>'
+      + '<td style="font-size:.8rem;">' + fmtDate(b.dueDate) + '</td>'
+      + '<td><span class="fine-badge ' + cls + '">' + lbl + '</span></td>'
+      + '<td style="font-weight:700;' + (fine > 0 ? 'color:#e74c3c;' : 'color:#27ae60;') + '">₹' + fine + '</td>'
+      + '<td><button class="act-btn edit-btn" style="font-size:.75rem;" onclick="adminForceReturn(' + b.id + ',this)">📥 Return</button></td>'
+      + '</tr>';
+  }).join('');
+}
+
+/* ── Admin force return ── */
+async function adminForceReturn(borrowId, btn) {
+  if (!confirm('Force return this book? Fine will be calculated automatically.')) return;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+
+  var backendOnline = await API.isBackendOnline();
+  if (backendOnline) {
+    try {
+      await API.borrow.return(borrowId);
+      showToast('Book returned successfully! Fine calculated & email sent 📧', 'success');
+      refreshAll(); return;
+    } catch(e) {
+      showToast(e.message || 'Failed to return book.', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '📥 Return'; } return;
+    }
+  }
+
+  /* Offline */
+  returnBorrow(borrowId);   /* script.js restores stock */
+  showToast('Book returned (offline mode).', 'success');
+  refreshAll();
+}
+
+/* ════════════════════════════════════════════════
+   OVERDUE SECTION
+════════════════════════════════════════════════ */
+function renderOverdue() {
+  var books   = getBooks();
+  var overdue = getActiveBorrows().filter(function(b) { return new Date(b.dueDate) < new Date(); });
+  var el      = document.getElementById('overdueList');
+
+  if (!overdue.length) {
+    el.innerHTML = '<div class="empty-state"><span class="ei">✅</span><strong>No overdue books!</strong><p style="margin-top:8px;">All borrowed books are within their due date.</p></div>';
+    return;
+  }
+  el.innerHTML = overdue.map(function(b) {
+    var book = books.find(function(x) { return x.id === b.bookId; }) || {};
+    var fine = calcFine(b.dueDate);
+    var days = Math.ceil((new Date() - new Date(b.dueDate)) / 86400000);
+    return '<div class="overdue-card">'
+      + '<div class="oc-icon">📕</div>'
+      + '<div class="oc-info">'
+      + '<div class="oc-title">' + (book.title || 'Book #' + b.bookId) + '</div>'
+      + '<div class="oc-meta">Member: <strong>' + (b.memberId || b._userEmail || 'member') + '</strong> &nbsp;·&nbsp; Due: <strong style="color:#e74c3c;">' + fmtDate(b.dueDate) + '</strong> &nbsp;·&nbsp; <strong>' + days + ' day' + (days !== 1 ? 's' : '') + ' overdue</strong></div>'
+      + '</div>'
+      + '<div class="oc-fine">₹' + fine + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════
+   SECTION NAV
+════════════════════════════════════════════════ */
+function showSection(name, btn) {
+  var titles = { overview:'Overview', books:'Manage Books', borrows:'All Borrows', overdue:'Overdue & Fines' };
+  document.getElementById('topbarTitle').textContent = titles[name] || name;
+  document.querySelectorAll('.page-section').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('section-' + name).classList.add('active');
+  document.querySelectorAll('.sidebar-link').forEach(function(l) { l.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  if (window.innerWidth < 900) closeSidebar();
+}
+
+/* ════════════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════════════ */
 function toggleSidebar() {
   var s = document.getElementById('sidebar'), o = document.getElementById('sidebarOverlay');
   s.classList.toggle('open');
@@ -548,267 +1016,9 @@ function closeSidebar() {
   document.getElementById('sidebarOverlay').style.display = 'none';
 }
 
-/* ══════════════════════════════════════════════
-   LOAD STATS — computed from localStorage data
-══════════════════════════════════════════════ */
-function loadStats() {
-  var totalBooks    = _allBooks.length;
-  var totalStock    = _allBooks.reduce(function(s,b) { return s + (b.stock||0); }, 0);
-  var activeBorrows = _allBorrows.filter(function(b) { return !b.returned; }).length;
-  var available     = Math.max(0, totalStock - activeBorrows);
-  var overdueCount  = _allBorrows.filter(function(b) { return !b.returned && new Date(b.dueDate) < new Date(); }).length;
-  var finesTotal    = _allBorrows.reduce(function(s,b) { return s + calcFine(b.dueDate); }, 0);
-
-  animCount('ovTotalBooks', totalBooks);
-  animCount('ovAvailable',  available);
-  animCount('ovBorrowed',   activeBorrows);
-  animCount('ovOverdue',    overdueCount);
-
-  var fEl = document.getElementById('ovFines');
-  if (fEl) {
-    fEl.textContent = '₹' + finesTotal;
-    fEl.style.color = finesTotal > 0 ? '#e74c3c' : '#8e44ad';
-  }
-
-  setText('subTotalBooks', totalBooks + ' titles in library');
-  setText('subAvailable',  available + ' copies in stock');
-  setText('subBorrowed',   activeBorrows + ' active loans');
-  setText('subOverdue',    overdueCount > 0 ? overdueCount + ' past due date' : 'all on time ✅');
-  setText('subFines',      finesTotal > 0 ? '₹5/day · total ₹' + finesTotal : 'no fines due ✅');
-
-  setTimeout(function () {
-    setBar('pbTotalBooks', 100);
-    setBar('pbAvailable',  totalStock > 0 ? Math.round(available / totalStock * 100) : 0);
-    setBar('pbBorrowed',   totalStock > 0 ? Math.round(activeBorrows / totalStock * 100) : 0);
-    setBar('pbOverdue',    activeBorrows > 0 ? Math.round(overdueCount / activeBorrows * 100) : 0);
-    setBar('pbFines',      Math.min(Math.round(finesTotal / 500 * 100), 100));
-  }, 150);
-}
-
-/* ══════════════════════════════════════════════
-   BOOKS TABLE
-══════════════════════════════════════════════ */
-function renderAdminBooks() {
-  var q      = ((document.getElementById('bookSearchAdmin') || {}).value || '').toLowerCase().trim();
-  var genre  = ((document.getElementById('bookFilterGenre')  || {}).value || 'all');
-  var stockF = ((document.getElementById('bookFilterStock')  || {}).value || 'all');
-
-  var books = _allBooks.slice();
-  if (q)               books = books.filter(function(b) { return b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q); });
-  if (genre !== 'all') books = books.filter(function(b) { return b.genre === genre; });
-  if (stockF === 'available') books = books.filter(function(b) { return b.stock > 0; });
-  if (stockF === 'empty')     books = books.filter(function(b) { return b.stock === 0; });
-
-  var lbl = document.getElementById('booksMgmtCount');
-  if (lbl) lbl.textContent = '(' + books.length + ' books)';
-  document.getElementById('adminBooksBadge').textContent = _allBooks.length;
-
-  var tbody = document.getElementById('booksMgmtBody');
-  if (!books.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><span class="ei">📭</span>No books found.</div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = books.map(function(b) {
-    var sClass = b.stock === 0 ? 'empty' : b.stock <= 2 ? 'low' : 'ok';
-    var sLabel = b.stock === 0 ? '📛 Out of Stock' : b.stock <= 2 ? '⚠️ ' + b.stock + ' left' : '✅ ' + b.stock + ' copies';
-    return '<tr>'
-      + '<td style="font-size:.78rem;color:var(--text-muted);font-weight:600;">#' + String(b.id).padStart(3,'0') + '</td>'
-      + '<td><span style="font-weight:600;font-size:.875rem;">' + b.title + '</span></td>'
-      + '<td style="font-size:.84rem;">' + b.author + '</td>'
-      + '<td><span class="book-genre-tag" style="position:static;font-size:.72rem;">' + b.genre + '</span></td>'
-      + '<td style="font-size:.82rem;color:var(--text-muted);">' + (b.year > 0 ? b.year : Math.abs(b.year) + ' BC') + '</td>'
-      + '<td><span class="stock-pill ' + sClass + '">' + sLabel + '</span></td>'
-      + '<td style="white-space:nowrap;">'
-      + '<button class="act-btn edit-btn" onclick="openEditBookModal(' + b.id + ')">✏️ Edit</button>&nbsp;'
-      + '<button class="act-btn del-btn"  onclick="openDeleteModal(' + b.id + ')">🗑️</button>'
-      + '</td></tr>';
-  }).join('');
-}
-
-/* ══════════════════════════════════════════════
-   BORROWS TABLE
-══════════════════════════════════════════════ */
-function loadBorrows() { renderBorrowsTable(); renderOverdue(); }
-
-function filterBorrowsTab(filter, btn) {
-  borrowsFilter = filter;
-  document.querySelectorAll('.f-tab').forEach(function(t) { t.classList.remove('active'); });
-  btn.classList.add('active');
-  renderBorrowsTable();
-}
-
-function renderBorrowsTable() {
-  var active = _allBorrows.filter(function(b) { return !b.returned; });
-  if (borrowsFilter === 'overdue') active = active.filter(function(b) { return new Date(b.dueDate) < new Date(); });
-  if (borrowsFilter === 'safe')    active = active.filter(function(b) { return new Date(b.dueDate) >= new Date(); });
-
-  var tbody = document.getElementById('borrowsTableBody');
-  if (!active.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><span class="ei">📋</span>No borrow records yet.<br><small>Members borrow books from the dashboard.</small></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = active.map(function(b, i) {
-    var fine     = calcFine(b.dueDate);
-    var daysLeft = Math.ceil((new Date(b.dueDate) - new Date()) / 86400000);
-    var isOD     = daysLeft < 0;
-    var cls      = isOD ? 'overdue' : daysLeft <= 3 ? 'soon' : 'none';
-    var lbl      = isOD ? Math.abs(daysLeft) + 'd overdue' : daysLeft + 'd left';
-    var bookTitle = (b.title) || ('Book #' + b.bookId);
-    var userEmail = b._userEmail || 'member';
-    return '<tr>'
-      + '<td style="font-size:.78rem;color:var(--text-muted);">' + (i+1) + '</td>'
-      + '<td style="font-size:.85rem;font-weight:600;">👤 ' + userEmail + '</td>'
-      + '<td style="font-size:.85rem;">' + bookTitle + '</td>'
-      + '<td style="font-size:.8rem;color:var(--text-muted);">' + fmtDate(b.borrowDate) + '</td>'
-      + '<td style="font-size:.8rem;">' + fmtDate(b.dueDate) + '</td>'
-      + '<td><span class="fine-badge ' + cls + '">' + lbl + '</span></td>'
-      + '<td style="font-weight:700;' + (fine > 0 ? 'color:#e74c3c;' : 'color:#27ae60;') + '">₹' + fine + '</td>'
-      + '<td><span style="font-size:.75rem;color:var(--text-muted);">—</span></td>'
-      + '</tr>';
-  }).join('');
-}
-
-/* ── Overview recent panels ── */
-function renderRecentPanels(active, overdue) {
-  var rEl = document.getElementById('ovRecentBorrows');
-  if (rEl) {
-    if (!active.length) {
-      rEl.innerHTML = '<div class="empty-state"><span class="ei">📋</span>No active borrows yet.</div>';
-    } else {
-      rEl.innerHTML = active.slice(0, 5).map(function(b) {
-        var fine = calcFine(b.dueDate);
-        return '<div class="activity-item">'
-          + '<div class="act-icon borrow">📚</div>'
-          + '<div style="flex:1;">'
-          + '<span style="font-size:.85rem;font-weight:600;">' + (b.title || 'Book #' + b.bookId) + '</span>'
-          + '<span style="display:block;font-size:.75rem;color:var(--text-muted);">'
-          + (b._userEmail || 'member') + ' · Due: ' + fmtDate(b.dueDate)
-          + (fine > 0 ? ' · <span style="color:#e74c3c;font-weight:700;">₹' + fine + ' fine</span>' : '')
-          + '</span></div></div>';
-      }).join('');
-    }
-  }
-  var oEl = document.getElementById('ovOverdueSummary');
-  if (oEl) {
-    if (!overdue.length) {
-      oEl.innerHTML = '<div class="empty-state"><span class="ei">✅</span>No overdue books!</div>';
-    } else {
-      oEl.innerHTML = overdue.slice(0, 5).map(function(b) {
-        var fine = calcFine(b.dueDate);
-        return '<div class="activity-item">'
-          + '<div class="act-icon" style="background:rgba(231,76,60,.12);color:#e74c3c;">⚠️</div>'
-          + '<div style="flex:1;">'
-          + '<span style="font-size:.85rem;font-weight:600;color:#e74c3c;">' + (b.title || 'Book #' + b.bookId) + '</span>'
-          + '<span style="display:block;font-size:.75rem;color:var(--text-muted);">'
-          + (b._userEmail || 'member') + ' · Fine: <strong style="color:#e74c3c;">₹' + fine + '</strong>'
-          + '</span></div></div>';
-      }).join('');
-    }
-  }
-}
-
-/* ── Overdue section ── */
-function renderOverdue() {
-  var overdue = _allBorrows.filter(function(b) { return !b.returned && new Date(b.dueDate) < new Date(); });
-  var el = document.getElementById('overdueList');
-  if (!overdue.length) {
-    el.innerHTML = '<div class="empty-state"><span class="ei">✅</span><strong>No overdue books!</strong><p style="margin-top:8px;">All borrowed books are within their due date.</p></div>';
-    return;
-  }
-  el.innerHTML = overdue.map(function(b) {
-    var fine = calcFine(b.dueDate);
-    var days = Math.ceil((new Date() - new Date(b.dueDate)) / 86400000);
-    return '<div class="overdue-card">'
-      + '<div class="oc-icon">📕</div>'
-      + '<div class="oc-info">'
-      + '<div class="oc-title">' + (b.title || 'Book #' + b.bookId) + '</div>'
-      + '<div class="oc-meta">Member: <strong>' + (b._userEmail || 'member') + '</strong> &nbsp;·&nbsp; Due: <strong style="color:#e74c3c;">' + fmtDate(b.dueDate) + '</strong> &nbsp;·&nbsp; <strong>' + days + ' day' + (days !== 1 ? 's' : '') + ' overdue</strong></div>'
-      + '</div>'
-      + '<div class="oc-fine">₹' + fine + '</div>'
-      + '</div>';
-  }).join('');
-}
-
-/* ══════════════════════════════════════════════
-   ADD / EDIT / DELETE BOOK — saved to localStorage
-══════════════════════════════════════════════ */
-function openAddBookModal() {
-  editingBookId = null;
-  document.getElementById('bookModalTitle').textContent   = '➕ Add New Book';
-  document.getElementById('bookModalSaveBtn').textContent = '💾 Save Book';
-  ['fTitle','fAuthor','fYear','fIsbn','fStock','fCover','fDesc'].forEach(function(id) { document.getElementById(id).value = ''; });
-  document.getElementById('fGenre').value = 'fiction';
-  openModal('bookModal');
-}
-
-function openEditBookModal(id) {
-  var book = _allBooks.find(function(b) { return b.id === id; });
-  if (!book) return;
-  editingBookId = id;
-  document.getElementById('bookModalTitle').textContent   = '✏️ Edit Book';
-  document.getElementById('bookModalSaveBtn').textContent = '💾 Update Book';
-  document.getElementById('fTitle').value  = book.title;
-  document.getElementById('fAuthor').value = book.author;
-  document.getElementById('fGenre').value  = book.genre;
-  document.getElementById('fYear').value   = book.year || '';
-  document.getElementById('fIsbn').value   = book.isbn  || '';
-  document.getElementById('fStock').value  = book.stock;
-  document.getElementById('fCover').value  = book.coverUrl || book.cover || '';
-  document.getElementById('fDesc').value   = book.description || '';
-  openModal('bookModal');
-}
-
-function saveBook() {
-  var title  = document.getElementById('fTitle').value.trim();
-  var author = document.getElementById('fAuthor').value.trim();
-  var genre  = document.getElementById('fGenre').value;
-  var year   = parseInt(document.getElementById('fYear').value)  || new Date().getFullYear();
-  var isbn   = document.getElementById('fIsbn').value.trim();
-  var stock  = parseInt(document.getElementById('fStock').value) || 0;
-  var cover  = document.getElementById('fCover').value.trim();
-  var desc   = document.getElementById('fDesc').value.trim();
-
-  if (!title || !author || stock < 0) { showToast('Please fill Title, Author, and Stock fields.', 'error'); return; }
-
-  if (editingBookId) {
-    var idx = _allBooks.findIndex(function(b) { return b.id === editingBookId; });
-    if (idx !== -1) {
-      _allBooks[idx] = Object.assign(_allBooks[idx], { title:title, author:author, genre:genre, year:year, isbn:isbn, stock:stock, coverUrl:cover, description:desc });
-    }
-    showToast('"' + title + '" updated ✅', 'success');
-  } else {
-    var newId = Math.max.apply(null, _allBooks.map(function(b) { return b.id; })) + 1;
-    _allBooks.push({ id:newId, title:title, author:author, genre:genre, year:year, isbn:isbn, stock:stock, coverUrl:cover, description:desc });
-    showToast('"' + title + '" added 📚', 'success');
-  }
-  saveAdminBooks();
-  closeModal('bookModal');
-  renderAdminBooks();
-  loadStats();
-}
-
-/* ── DELETE ── */
-function openDeleteModal(id) {
-  deleteBookId = id;
-  var book = _allBooks.find(function(b) { return b.id === id; });
-  document.getElementById('deleteBookName').textContent = book ? '"' + book.title + '"' : 'this book';
-  document.getElementById('confirmDeleteBtn').onclick = confirmDelete;
-  openModal('deleteModal');
-}
-
-function confirmDelete() {
-  if (!deleteBookId) return;
-  var book = _allBooks.find(function(b) { return b.id === deleteBookId; });
-  _allBooks = _allBooks.filter(function(b) { return b.id !== deleteBookId; });
-  saveAdminBooks();
-  showToast('"' + (book ? book.title : 'Book') + '" deleted.', 'info');
-  closeModal('deleteModal');
-  deleteBookId = null;
-  renderAdminBooks();
-  loadStats();
-}
-
-/* ── ADMIN SEARCH ── */
+/* ════════════════════════════════════════════════
+   ADMIN SEARCH
+════════════════════════════════════════════════ */
 function handleAdminSearch(q) {
   if (q.trim()) {
     showSection('books', document.getElementById('nav-books'));
@@ -817,41 +1027,101 @@ function handleAdminSearch(q) {
   }
 }
 
-/* ── MODALS ── */
+/* ════════════════════════════════════════════════
+   MODALS
+════════════════════════════════════════════════ */
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(function (o) {
-  o.addEventListener('click', function (e) { if (e.target === o) o.classList.remove('open'); });
+document.querySelectorAll('.modal-overlay').forEach(function(o) {
+  o.addEventListener('click', function(e) { if (e.target === o) o.classList.remove('open'); });
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(function(m) { m.classList.remove('open'); });
 });
 
-/* ── LOGOUT ── */
+/* ════════════════════════════════════════════════
+   LOGOUT
+════════════════════════════════════════════════ */
 function openLogoutModal() { openModal('logoutModal'); }
 function doLogout() {
-  ['libAuth','libUser','libRole','libEmail','libToken'].forEach(function (k) { sessionStorage.removeItem(k); });
+  ['libAuth','libUser','libRole','libEmail','libToken','libPass','libId'].forEach(function(k) { sessionStorage.removeItem(k); });
   window.location.href = 'index.html';
 }
 
-/* ── KEYBOARD ── */
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(function (m) { m.classList.remove('open'); });
-});
+/* ════════════════════════════════════════════════
+   LIVE POLLING — every 30 seconds
+════════════════════════════════════════════════ */
+function startLiveSync() {
+  setInterval(async function() {
+    var backendOnline = await API.isBackendOnline();
+    if (backendOnline) {
+      try {
+        var token = sessionStorage.getItem('libToken');
+        if (!token) return;
 
-/* ── HELPERS ── */
+        /* ── Refresh borrows table from live API ── */
+        try {
+          var apiBorrows = await API.borrow.all();
+          var mapped = apiBorrows.map(function(r) {
+            return { id:r.id, bookId:r.book?r.book.id:null,
+                     memberId:r.user?r.user.email:'member',
+                     borrowDate:r.borrowDate, dueDate:r.dueDate,
+                     returned:r.returned, returnDate:r.returnDate||null };
+          });
+          saveBorrows(mapped);
+          renderBorrowsTable();
+          renderOverdue();
+        } catch(e) { /* silent */ }
+
+        /* ── Update stats cards ── */
+        var stats = await API.admin.stats();
+        if (stats.totalBooks !== undefined || stats.activeBorrows !== undefined) {
+          renderStatsCards({
+            totalBooks      : stats.totalBooks    || 0,
+            totalCopies     : stats.totalCopies   || stats.availableBooks || 0,
+            activeBorrows   : stats.activeBorrows || 0,
+            overdueCount    : stats.overdueCount  || 0,
+            finesOutstanding: stats.finesOutstanding || 0
+          });
+          document.getElementById('adminBorrowsBadge').textContent = stats.activeBorrows || '';
+          document.getElementById('adminOverdueBadge').textContent = stats.overdueCount  || '';
+          updateTimestamp();
+
+          /* Refresh recent panels on overview page */
+          var activeBorrows = getActiveBorrows();
+          var overdueList   = activeBorrows.filter(function(b) { return new Date(b.dueDate) < new Date(); });
+          renderRecentPanels(activeBorrows, overdueList);
+        }
+      } catch(e) { /* silent */ }
+    } else {
+      computeAndRenderStats();
+    }
+  }, 30000);
+}
+
+/* ════════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════════ */
 function setText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
-function fmtDate(dateStr) { return new Date(dateStr).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }); }
-function setBar(id, pct)  { var el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; }
-function calcFine(dueDate) {
-  var daysLate = Math.ceil((new Date() - new Date(dueDate)) / 86400000);
-  return daysLate > 0 ? daysLate * 5 : 0;
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }); }
+function setBar(id, pct) { var el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; }
+function updateTimestamp() {
+  var el = document.getElementById('lastUpdatedTime');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
 }
 function animCount(id, target) {
   var el = document.getElementById(id); if (!el) return;
-  el.textContent = '0';
-  var cur = 0, step = Math.max(1, Math.ceil(target / 40));
-  var t = setInterval(function () { cur = Math.min(cur + step, target); el.textContent = cur; if (cur >= target) clearInterval(t); }, 20);
+  var cur  = parseInt(el.textContent) || 0;
+  var diff = target - cur;
+  if (diff === 0) return;
+  var step = Math.max(1, Math.ceil(Math.abs(diff) / 30));
+  var dir  = diff > 0 ? 1 : -1;
+  var t = setInterval(function() {
+    cur += dir * step;
+    if ((dir > 0 && cur >= target) || (dir < 0 && cur <= target)) { cur = target; clearInterval(t); }
+    el.textContent = cur;
+  }, 20);
 }
-
-
 </script>
 </body>
 </html>

@@ -214,12 +214,12 @@
    * ═══════════════════════════════════════════════════════ */
   const ACCOUNTS = [
     // ── ADMIN ──
-    { email: '21x51a3235srecnandyal.edu.in',      password: 'hussain', role: 'admin',  name: 'Library Admin'          },
+    { email: '21x51a3235@srecnandyal.edu.in',      password: 'hussain', role: 'admin',  name: 'Library Admin'  },
     // ── MEMBERS ──
-    { email: 'shaiksaddambkr711@gmail.com',        password: '2004',    role: 'member', name: 'Saddam BKR'            },
-    { email: 'dudekulaasaduddin210@gmail.com',     password: '2003',    role: 'member', name: 'Asaduddin'             },
-    { email: 'hussain0706w@gmail.com',             password: '2004',    role: 'member', name: 'Hussain'               },
-    { email: 'shaikmohammedshaikrizwan@gmail.com', password: '2002',    role: 'member', name: 'Rizwan'                },
+    { email: 'shaiksaddambkr711@gmail.com',        password: '2003',    role: 'member', name: 'Saddam BKR'     },
+    { email: 'dudekulaasaduddin210@gmail.com',     password: '2001',    role: 'member', name: 'Asaduddin'      },
+    { email: 'hussain0706w@gmail.com',             password: '2004',    role: 'member', name: 'Hussain'        },
+    { email: 'shaikmohammedshaikrizwan@gmail.com', password: '2002',    role: 'member', name: 'Rizwan'         },
   ];
 
   /* ── Role switcher ── */
@@ -244,10 +244,10 @@
   });
 
   /* ══════════════════════════════════════════════════════
-   *  STATIC LOGIN — No backend required!
-   *  Checks email + password against the ACCOUNTS list above.
+   *  LOGIN — Tries the real backend API first.
+   *  Falls back to the ACCOUNTS list above if backend is offline.
    * ══════════════════════════════════════════════════════ */
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
     const email    = document.getElementById('username').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
@@ -259,76 +259,103 @@
     btn.disabled = true;
     addRipple(e, btn);
 
-    // Simulate a short loading delay for UX polish
-    setTimeout(() => {
-      // Find matching account
-      const account = ACCOUNTS.find(
-        a => a.email.toLowerCase() === email && a.password === password
-      );
+    // ── Helper: show error and reset button ──
+    function showError(msg) {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      errBox.classList.add('show');
+      document.getElementById('errorText').textContent = msg;
+      document.getElementById('loginForm').classList.add('shake');
+      setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 400);
+      document.getElementById('password').value = '';
+      document.getElementById('password').focus();
+    }
 
-      if (!account) {
-        // No matching account found
-        btn.classList.remove('loading');
-        btn.disabled = false;
-        errBox.classList.add('show');
-        document.getElementById('errorText').textContent = 'Invalid email or password. Please try again.';
-        document.getElementById('loginForm').classList.add('shake');
-        setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 400);
-        document.getElementById('password').value = '';
-        document.getElementById('password').focus();
-        return;
-      }
-
-      // Role mismatch check
-      if (currentRole === 'admin' && account.role !== 'admin') {
-        btn.classList.remove('loading');
-        btn.disabled = false;
-        errBox.classList.add('show');
-        document.getElementById('errorText').textContent = 'This is a Member account. Please select the "Library Member" tab.';
-        document.getElementById('loginForm').classList.add('shake');
-        setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 400);
-        return;
-      }
-      if (currentRole === 'member' && account.role !== 'member') {
-        btn.classList.remove('loading');
-        btn.disabled = false;
-        errBox.classList.add('show');
-        document.getElementById('errorText').textContent = 'This is an Admin account. Please select the "Admin" tab.';
-        document.getElementById('loginForm').classList.add('shake');
-        setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 400);
-        return;
-      }
-
-      // ✅ Login successful — save session
-      const isAdmin = account.role === 'admin';
-      sessionStorage.setItem('libAuth',  'true');
-      sessionStorage.setItem('libUser',  account.name);
-      sessionStorage.setItem('libRole',  isAdmin ? 'ROLE_ADMIN' : 'ROLE_MEMBER');
-      sessionStorage.setItem('libEmail', account.email);
-      sessionStorage.setItem('libToken', 'static-token-' + account.email); // dummy token
-      sessionStorage.setItem('libId',    ACCOUNTS.indexOf(account) + 1);
-
-      // Show success screen
+    // ── Helper: finish successful login ──
+    function finishLogin(name, role) {
+      const isAdmin = role === 'admin';
       btn.classList.remove('loading');
       document.getElementById('loginFormWrap').style.display = 'none';
       const ss = document.getElementById('successScreen');
       ss.classList.add('show');
       document.getElementById('successTitle').textContent = isAdmin ? 'Admin Access Granted!' : 'Login Successful!';
       document.getElementById('successText').textContent  = isAdmin
-        ? `Welcome back, ${account.name}! Redirecting to Admin Panel…`
-        : `Welcome back, ${account.name}! Redirecting to your dashboard…`;
+        ? `Welcome back, ${name}! Redirecting to Admin Panel…`
+        : `Welcome back, ${name}! Redirecting to your dashboard…`;
       document.getElementById('progressBar').style.background = isAdmin ? '#8e44ad' : 'var(--accent)';
-
       requestAnimationFrame(() => {
         document.getElementById('progressBar').style.width = '100%';
       });
-
-      // Redirect after success animation
       setTimeout(() => {
         window.location.href = isAdmin ? 'admin.html' : 'dashboard.html';
       }, 2000);
+    }
 
-    }, 600); // 600ms loading effect
+    // ── 1. Try real backend API ──
+    const backendOnline = await API.isBackendOnline();
+    if (backendOnline) {
+      try {
+        const data = await API.auth.login(email, password);
+        // api.js already stored token + session fields
+        // Normalize role for frontend use
+        const role = data.role === 'ROLE_ADMIN' ? 'admin' : 'member';
+        sessionStorage.setItem('libRole', role);
+
+        // Role tab mismatch check
+        if (currentRole === 'admin' && role !== 'admin') {
+          // Undo the session API set
+          sessionStorage.clear();
+          showError('This is a Member account. Please select the "Library Member" tab.');
+          return;
+        }
+        if (currentRole === 'member' && role !== 'member') {
+          sessionStorage.clear();
+          showError('This is an Admin account. Please select the "Admin" tab.');
+          return;
+        }
+
+        finishLogin(data.name, role);
+        return;
+      } catch (err) {
+        // Backend returned an error (wrong credentials, deactivated, etc.)
+        showError(err.message || 'Invalid email or password. Please try again.');
+        return;
+      }
+    }
+
+    // ── 2. Fallback: static ACCOUNTS (backend is offline) ──
+    // Small artificial delay for UX polish
+    await new Promise(r => setTimeout(r, 600));
+
+    const account = ACCOUNTS.find(
+      a => a.email.toLowerCase() === email && a.password === password
+    );
+
+    if (!account) {
+      showError('Invalid email or password. Please try again.');
+      return;
+    }
+
+    // Role tab mismatch check
+    if (currentRole === 'admin' && account.role !== 'admin') {
+      showError('This is a Member account. Please select the "Library Member" tab.');
+      return;
+    }
+    if (currentRole === 'member' && account.role !== 'member') {
+      showError('This is an Admin account. Please select the "Admin" tab.');
+      return;
+    }
+
+    // ✅ Static login successful — save session
+    sessionStorage.setItem('libAuth',  'true');
+    sessionStorage.setItem('libUser',  account.name);
+    sessionStorage.setItem('libRole',  account.role);  // 'admin' or 'member'
+    sessionStorage.setItem('libEmail', account.email);
+    sessionStorage.setItem('libPass',  password);       // saved for auto-JWT exchange
+    sessionStorage.setItem('libToken', '');             // no real JWT yet
+    sessionStorage.setItem('libId',    ACCOUNTS.indexOf(account) + 1);
+
+    finishLogin(account.name, account.role);
   }
 
   /* ── Ripple effect ── */

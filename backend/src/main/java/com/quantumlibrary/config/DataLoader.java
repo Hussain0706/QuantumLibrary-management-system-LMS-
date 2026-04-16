@@ -44,62 +44,44 @@ public class DataLoader implements CommandLineRunner {
 
     // ─────────────────────────────────────────────────
     private void seedUsers() {
-        if (userRepository.count() > 0) return;
-        log.info("🌱 Seeding real users...");
+        if (userRepository.count() == 0) {
+            // ── First time: seed all users ──
+            log.info("🌱 Seeding users for the first time...");
+            userRepository.saveAll(List.of(
+                newUser("Library Admin",  "21x51a3235@srecnandyal.edu.in",        "hussain", User.Role.ROLE_ADMIN,  "+91 93922 46590"),
+                newUser("Saddam BKR",     "shaiksaddambkr711@gmail.com",          "2003",    User.Role.ROLE_MEMBER, ""),
+                newUser("Asaduddin",      "dudekulaasaduddin210@gmail.com",       "2001",    User.Role.ROLE_MEMBER, ""),
+                newUser("Hussain",        "hussain0706w@gmail.com",               "2004",    User.Role.ROLE_MEMBER, "+91 93922 46590"),
+                newUser("Rizwan",         "Shaikmohammedshaikrizwan@gmail.com",   "2002",    User.Role.ROLE_MEMBER, "")
+            ));
+            log.info("✅ Admin + 4 members created.");
+        } else {
+            // ── Already seeded: just sync passwords to latest values ──
+            log.info("🔄 Syncing member passwords...");
+            syncPassword("21x51a3235@srecnandyal.edu.in",         "hussain");
+            syncPassword("shaiksaddambkr711@gmail.com",          "2003");
+            syncPassword("dudekulaasaduddin210@gmail.com",       "2001");
+            syncPassword("hussain0706w@gmail.com",               "2004");
+            syncPassword("Shaikmohammedshaikrizwan@gmail.com",   "2002");
+            log.info("✅ Passwords synced.");
+        }
+    }
 
-        userRepository.saveAll(List.of(
+    private User newUser(String name, String email, String password,
+                         User.Role role, String phone) {
+        return User.builder()
+                .name(name).email(email)
+                .password(passwordEncoder.encode(password))
+                .role(role).phone(phone).active(true)
+                .build();
+    }
 
-            // ── ADMIN ──
-            User.builder()
-                .name("Library Admin")
-                .email("21x51a3235srecnandyal.edu.in")
-                .password(passwordEncoder.encode("hussain"))
-                .role(User.Role.ROLE_ADMIN)
-                .phone("+91 93922 46590")
-                .active(true)
-                .build(),
-
-            // ── MEMBER 1 ──
-            User.builder()
-                .name("Saddam BKR")
-                .email("shaiksaddambkr711@gmail.com")
-                .password(passwordEncoder.encode("2004"))
-                .role(User.Role.ROLE_MEMBER)
-                .phone("")
-                .active(true)
-                .build(),
-
-            // ── MEMBER 2 ──
-            User.builder()
-                .name("Asaduddin")
-                .email("dudekulaasaduddin210@gmail.com")
-                .password(passwordEncoder.encode("2003"))
-                .role(User.Role.ROLE_MEMBER)
-                .phone("")
-                .active(true)
-                .build(),
-
-            // ── MEMBER 3 ──
-            User.builder()
-                .name("Hussain")
-                .email("hussain0706w@gmail.com")
-                .password(passwordEncoder.encode("2004"))
-                .role(User.Role.ROLE_MEMBER)
-                .phone("+91 93922 46590")
-                .active(true)
-                .build(),
-
-            // ── MEMBER 4 ──
-            User.builder()
-                .name("Rizwan")
-                .email("Shaikmohammedshaikrizwan@gmail.com")
-                .password(passwordEncoder.encode("2002"))
-                .role(User.Role.ROLE_MEMBER)
-                .phone("")
-                .active(true)
-                .build()
-        ));
-        log.info("✅ Admin + 4 members created successfully");
+    private void syncPassword(String email, String rawPassword) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            user.setPassword(passwordEncoder.encode(rawPassword));
+            userRepository.save(user);
+            log.info("  ✔ Updated password for {}", email);
+        });
     }
 
     // ─────────────────────────────────────────────────

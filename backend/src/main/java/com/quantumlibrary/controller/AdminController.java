@@ -52,14 +52,19 @@ public class AdminController {
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalBooks",       bookService.totalBooks());
-        stats.put("availableBooks",   bookService.availableBooks());
+        // ── Book counts ──
+        stats.put("totalBooks",       bookService.totalBooks());    // COUNT(DISTINCT id) e.g. 32
+        stats.put("totalCopies",      bookService.totalCopies());   // SUM(stock) e.g. 115
+        stats.put("availableBooks",   bookService.availableBooks()); // titles with stock > 0
+        // ── Members ──
         stats.put("totalMembers",     userRepository.findByRole(User.Role.ROLE_MEMBER).size());
-        stats.put("activeBorrows",    borrowService.countActiveBorrows());
+        // ── Borrows ──
+        stats.put("activeBorrows",    borrowService.countActiveBorrows()); // currently borrowed
         stats.put("issuedToday",      borrowService.countIssuedToday());
-        stats.put("overdueCount",     borrowService.getOverdueBorrows().size());
-        stats.put("finesCollected",   fineService.totalCollected());
-        stats.put("finesOutstanding", fineService.totalOutstanding());
+        stats.put("overdueCount",     borrowService.getOverdueBorrows().size());  // overdue books
+        // ── Fines ──
+        stats.put("finesCollected",   fineService.totalCollected());    // paid fines total ₹
+        stats.put("finesOutstanding", fineService.totalOutstanding());  // unpaid fines total ₹
         return ResponseEntity.ok(ApiResponse.success("Dashboard stats", stats));
     }
 

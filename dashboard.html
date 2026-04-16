@@ -1355,71 +1355,83 @@
     ];
  
     /* ════════════════════════════════════════════════
-       PERSISTENCE HELPERS
+       PERSISTENCE HELPERS — data is SEPARATE per member
+       Key format: dash_borrowed_hussain0706w@gmail.com
     ════════════════════════════════════════════════ */
- 
+
+    // Returns localStorage key prefix for the current logged-in user
+    function userKey(base) {
+      const email = sessionStorage.getItem('libEmail') || 'guest';
+      return base + '_' + email;
+    }
+
     function loadBooksStatus() {
       try {
-        const saved = JSON.parse(localStorage.getItem('dash_books_status') || '{}');
+        const saved = JSON.parse(localStorage.getItem(userKey('dash_books_status')) || '{}');
         BOOKS.forEach(b => { if (saved[b.id]) b.status = saved[b.id]; });
       } catch(e) {}
     }
- 
+
     function saveBooksStatus() {
       const map = {};
       BOOKS.forEach(b => { map[b.id] = b.status; });
-      localStorage.setItem('dash_books_status', JSON.stringify(map));
+      localStorage.setItem(userKey('dash_books_status'), JSON.stringify(map));
     }
- 
+
     function loadBorrowed() {
       try {
-        const raw = JSON.parse(localStorage.getItem('dash_borrowed') || '[]');
+        const raw = JSON.parse(localStorage.getItem(userKey('dash_borrowed')) || '[]');
         return raw.map(e => ({ ...e, borrowDate: new Date(e.borrowDate), dueDate: new Date(e.dueDate) }));
       } catch(e) { return []; }
     }
- 
+
     function saveBorrowed() {
-      localStorage.setItem('dash_borrowed', JSON.stringify(MY_BORROWED));
+      localStorage.setItem(userKey('dash_borrowed'), JSON.stringify(MY_BORROWED));
     }
- 
+
     function loadHistory() {
-      try { return JSON.parse(localStorage.getItem('dash_history') || '[]'); }
+      try { return JSON.parse(localStorage.getItem(userKey('dash_history')) || '[]'); }
       catch(e) { return []; }
     }
- 
+
     function saveHistory() {
-      localStorage.setItem('dash_history', JSON.stringify(BORROW_HISTORY));
+      localStorage.setItem(userKey('dash_history'), JSON.stringify(BORROW_HISTORY));
     }
- 
+
     function clearDashboardData() {
-      localStorage.removeItem('dash_books_status');
-      localStorage.removeItem('dash_borrowed');
-      localStorage.removeItem('dash_history');
-      localStorage.removeItem('dash_history_seq');
+      localStorage.removeItem(userKey('dash_books_status'));
+      localStorage.removeItem(userKey('dash_borrowed'));
+      localStorage.removeItem(userKey('dash_history'));
+      localStorage.removeItem(userKey('dash_history_seq'));
       BOOKS.forEach(b => { b.status = 'available'; });
       MY_BORROWED = [];
       BORROW_HISTORY = [];
       historySeq = 0;
       refreshAll();
     }
- 
+
     /* USER STATE */
     let MY_BORROWED    = loadBorrowed();
     let BORROW_HISTORY = loadHistory();
-    let historySeq     = parseInt(localStorage.getItem('dash_history_seq') || '0', 10);
+    let historySeq     = parseInt(localStorage.getItem(userKey('dash_history_seq')) || '0', 10);
     let pendingId      = null;
- 
+
     loadBooksStatus();
  
     /* ══════════════════════════════════════════════
-       ✅ FIX 1 — Stock-aware helpers (sync with Admin Panel)
-       getTotalStock()     → sums all b.stock values
+       Stock-aware helpers
+       getTotalStock()     → sums all b.stock values (for Card 2 Available Copies)
        getAvailableStock() → sums (b.stock - copies borrowed by this user)
+       getTotalTitles()    → count of unique book titles (for Card 1 Total Books)
     ══════════════════════════════════════════════ */
+    function getTotalTitles() {
+      return BOOKS.length;   // unique title count = 32
+    }
+
     function getTotalStock() {
       return BOOKS.reduce((sum, b) => sum + (b.stock || 1), 0);
     }
- 
+
     function getAvailableStock() {
       return BOOKS.reduce((sum, b) => {
         const borrowedByMe = MY_BORROWED.filter(e => e.bookId === b.id).length;
@@ -1438,6 +1450,44 @@
       document.getElementById('profileSince') && (document.getElementById('profileSince').textContent = new Date().getFullYear());
 
       startClock();
+
+      /* ── Merge admin-added books from lib_books into BOOKS catalog ──
+         When admin adds a new book, it gets saved to localStorage 'lib_books'.
+         We merge any IDs not already present in the hardcoded BOOKS array
+         so students can see and borrow newly added books immediately.        */
+      try {
+        const libBooks = JSON.parse(localStorage.getItem('lib_books') || 'null');
+        if (libBooks && libBooks.length > 0) {
+          const existingIds = new Set(BOOKS.map(b => b.id));
+          libBooks.forEach(lb => {
+            if (!existingIds.has(lb.id)) {
+              /* New book added by admin — inject into student catalog */
+              BOOKS.push({
+                id:     lb.id,
+                title:  lb.title   || 'Untitled',
+                author: lb.author  || 'Unknown',
+                genre:  (lb.genre  || 'General').toLowerCase(),
+                status: lb.stock > 0 ? 'available' : 'unavailable',
+                stock:  lb.stock   || 0,
+                year:   lb.year    || new Date().getFullYear(),
+                isbn:   lb.isbn    || '',
+                desc:   lb.desc    || lb.description || '',
+                cover:  lb.cover   || lb.coverUrl   || 'https://placehold.co/200x280/2C3E50/fff?text=📚',
+                rating: lb.rating  || 4
+              });
+            } else {
+              /* Existing book — sync stock changes from admin edits */
+              const existing = BOOKS.find(b => b.id === lb.id);
+              if (existing) {
+                existing.stock  = lb.stock;
+                existing.status = lb.stock > 0 ? 'available' : 'unavailable';
+                existing.title  = lb.title  || existing.title;
+                existing.author = lb.author || existing.author;
+              }
+            }
+          });
+        }
+      } catch(e) { console.warn('lib_books merge failed:', e.message); }
 
       /* ── Load borrows from localStorage (no backend needed) ── */
       MY_BORROWED    = loadBorrowed();
@@ -1504,24 +1554,20 @@
  
     /* ══════════════════ DASHBOARD ══════════════════ */
     function renderDashboard() {
-      /* ══════════════════════════════════════════════
-         ✅ FIX 3 — Use stock-based totals for the two
-         top stat cards so they match the Admin Panel:
-           total → sum of all stock values
-           avail → total stock minus borrowed copies
-      ══════════════════════════════════════════════ */
-      const total    = getTotalStock();       // ← FIXED: was BOOKS.length (counted titles)
-      const avail    = getAvailableStock();   // ← FIXED: was BOOKS.filter(available).length
+      /* Card 1: unique title count (BOOKS.length = 32)
+         Card 2: total available copies (stock - my borrows) */
+      const total    = getTotalTitles();    // ← 32 unique titles (NOT 136 total copies)
+      const avail    = getAvailableStock(); // ← copies student can still borrow
       const my       = MY_BORROWED.length;
       const returned = BORROW_HISTORY.filter(h => h.action === 'return').length;
- 
+
       animateCount('statTotal', total);
       animateCount('statAvailable', avail);
       animateCount('statMy', my);
       animateCount('statReturned', returned);
- 
+
       setTimeout(() => {
-        document.getElementById('availProgress').style.width = (avail / total * 100) + '%';
+        document.getElementById('availProgress').style.width = (avail / Math.max(getTotalStock(), 1) * 100) + '%';
         document.getElementById('myProgress').style.width = Math.min(my / 5 * 100, 100) + '%';
       }, 400);
  
@@ -1675,7 +1721,7 @@
       openModal('borrowModal');
     }
  
-    function confirmBorrow() {
+    async function confirmBorrow() {
       const b = BOOKS.find(x => x.id === pendingId); if (!b) return;
       const btn = document.getElementById('confirmBorrowBtn');
       if (btn) { btn.disabled = true; btn.textContent = '⏳ Processing...'; }
@@ -1688,22 +1734,54 @@
         return;
       }
 
-      /* ── Static borrow (localStorage only) ── */
+      /* ── Try real backend API first ── */
+      const backendOnline = await API.isBackendOnline();
+      if (backendOnline) {
+        try {
+          const record = await API.borrow.borrow(b.id);
+          // Success — sync local state from API response
+          const now = new Date(record.borrowDate);
+          const due = new Date(record.dueDate);
+          const userEmail = sessionStorage.getItem('libEmail') || 'member';
+          b.status = 'issued';
+          MY_BORROWED.push({ id: record.id, bookId: b.id, borrowDate: now, dueDate: due,
+                             userEmail: userEmail, title: b.title });
+          BORROW_HISTORY.unshift({
+            id: record.id, bookId: b.id, title: b.title, author: b.author, genre: b.genre,
+            action: 'borrow', userEmail: userEmail,
+            dateStr: now.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+          });
+          saveBorrowed(); saveBooksStatus(); saveHistory();
+          closeModal('borrowModal'); pendingId = null;
+          if (btn) { btn.disabled = false; btn.textContent = '📚 Confirm Borrow'; }
+          refreshAll();
+          const dueLabel = due.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+          showToast(`"${b.title}" borrowed! Due: ${dueLabel} ✅ Email sent 📧`, 'success');
+          return;
+        } catch (err) {
+          if (btn) { btn.disabled = false; btn.textContent = '📚 Confirm Borrow'; }
+          closeModal('borrowModal');
+          showToast(err.message || 'Could not borrow book. Please try again.', 'error');
+          return;
+        }
+      }
+
+      /* ── Fallback: localStorage only (backend offline) ── */
       setTimeout(() => {
         const now = new Date();
         const due = new Date(now); due.setDate(due.getDate() + 14);
-        const recordId = Date.now(); // unique ID
+        const recordId = Date.now();
+        const userEmail = sessionStorage.getItem('libEmail') || 'member';
 
         b.status = 'issued';
-        MY_BORROWED.push({ id: recordId, bookId: b.id, borrowDate: now, dueDate: due });
+        MY_BORROWED.push({ id: recordId, bookId: b.id, borrowDate: now, dueDate: due,
+                           userEmail: userEmail, title: b.title });
         BORROW_HISTORY.unshift({
           id: recordId, bookId: b.id, title: b.title, author: b.author, genre: b.genre,
-          action: 'borrow',
+          action: 'borrow', userEmail: userEmail,
           dateStr: now.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         });
-        saveBorrowed();
-        saveBooksStatus();
-        saveHistory();
+        saveBorrowed(); saveBooksStatus(); saveHistory();
         closeModal('borrowModal'); pendingId = null;
         if (btn) { btn.disabled = false; btn.textContent = '📚 Confirm Borrow'; }
         refreshAll();
@@ -1721,26 +1799,55 @@
       openModal('returnModal');
     }
  
-    function confirmReturn() {
+    async function confirmReturn() {
       const b = BOOKS.find(x => x.id === pendingId); if (!b) return;
       const borrowed = MY_BORROWED.find(e => e.bookId === pendingId);
       if (!borrowed) { showToast('Borrow record not found.', 'error'); return; }
       const btn = document.getElementById('confirmReturnBtn');
       if (btn) { btn.disabled = true; btn.textContent = '⏳ Processing...'; }
 
-      /* ── Static return (localStorage only) ── */
+      /* ── Try real backend API first ── */
+      const backendOnline = await API.isBackendOnline();
+      if (backendOnline) {
+        try {
+          const record = await API.borrow.return(borrowed.id);
+          // Success — update local state
+          const userEmail = sessionStorage.getItem('libEmail') || 'member';
+          b.status = 'available';
+          MY_BORROWED = MY_BORROWED.filter(e => e.bookId !== pendingId);
+          const now = new Date();
+          BORROW_HISTORY.unshift({
+            id: borrowed.id, bookId: b.id, title: b.title, author: b.author, genre: b.genre,
+            action: 'return', userEmail: userEmail,
+            dateStr: now.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+          });
+          saveBorrowed(); saveBooksStatus(); saveHistory();
+          closeModal('returnModal'); pendingId = null;
+          if (btn) { btn.disabled = false; btn.textContent = '📥 Confirm Return'; }
+          refreshAll();
+          const fineMsg = record.fine > 0 ? ` Fine: ₹${record.fine} 💸` : ' No fine ✅';
+          showToast(`"${b.title}" returned! ${fineMsg} Email sent 📧`, 'success');
+          return;
+        } catch (err) {
+          if (btn) { btn.disabled = false; btn.textContent = '📥 Confirm Return'; }
+          closeModal('returnModal');
+          showToast(err.message || 'Could not return book. Please try again.', 'error');
+          return;
+        }
+      }
+
+      /* ── Fallback: localStorage only (backend offline) ── */
       setTimeout(() => {
+        const userEmail = sessionStorage.getItem('libEmail') || 'member';
         b.status = 'available';
         MY_BORROWED = MY_BORROWED.filter(e => e.bookId !== pendingId);
         const now = new Date();
         BORROW_HISTORY.unshift({
           id: borrowed.id, bookId: b.id, title: b.title, author: b.author, genre: b.genre,
-          action: 'return',
+          action: 'return', userEmail: userEmail,
           dateStr: now.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         });
-        saveBorrowed();
-        saveBooksStatus();
-        saveHistory();
+        saveBorrowed(); saveBooksStatus(); saveHistory();
         closeModal('returnModal'); pendingId = null;
         if (btn) { btn.disabled = false; btn.textContent = '📥 Confirm Return'; }
         refreshAll();
